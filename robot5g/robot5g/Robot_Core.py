@@ -66,7 +66,7 @@ class Robot(Node):
         self.dy = 0.0
         self.dtheta = 0.0
 
-        self.odom_pub = self.create_publisher(Odometry, 'odom', 10)
+        self.odom_pub = self.create_publisher(Odometry, 'odom/raw', 10)
 
         # TF
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
@@ -266,7 +266,7 @@ class Robot(Node):
         t.transform.rotation.y = quat[2]
         t.transform.rotation.z = quat[3]
 
-        self.tf_broadcaster.sendTransform(t)
+        #self.tf_broadcaster.sendTransform(t)
 
         self.last_time = ts
 

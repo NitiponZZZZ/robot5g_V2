@@ -8,10 +8,10 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    lidar_launch_path = PathJoinSubstitution(
-        [FindPackageShare('sllidar_ros2'),
-         'launch', 'sllidar_s2_launch.py']
-    )
+    ekf_config_path = PathJoinSubstitution([FindPackageShare('robot5g'),'config','ekf.yaml'])
+
+    lidar_launch_path = PathJoinSubstitution([FindPackageShare('sllidar_ros2'),'launch', 'sllidar_s2_launch.py'])
+
     return LaunchDescription([
 
         Node(
@@ -38,7 +38,30 @@ def generate_launch_description():
             name='robot_feedback',
             output='screen',
         ),
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(lidar_launch_path)
+        # Node(
+        #     package="micro_ros_agent",
+        #     executable="micro_ros_agent",
+        #     name="micro_ros_agent_teensy",
+        #     arguments=['serial', '--dev','/dev/ESP'],
+        #     output='screen',
+        # ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(lidar_launch_path)
+        ),
+        Node(
+            package = 'tf2_ros',
+            executable = 'static_transform_publisher',
+            name = 'imu_tf_publisher',
+            arguments = ['0.1', '0.0', '0.05', '0.0', '0.0', '0.0', '1.0', 'base_link', 'imu_link'],
+        ),
+        Node(
+            package = 'robot_localization',
+            executable = 'ekf_node',
+            name = 'ekf_filter_node',
+            output = 'screen',
+            parameters = [
+                 ekf_config_path
+            ],
+            remappings = [("odometry/filtered","odom")]
         ),
     ])

@@ -18,7 +18,6 @@ class joyControl(Node):
         self.joy_sub = self.create_subscription(
             Joy, "joy", self.joy_callback, 20)
         #self.joy_sub = self.create_subscription(Joy, "joy", self.joy_callback,qos_profile=qos.qos_profile_sensor_data)
-
         self.vel_timer = self.create_timer(0.05, self.vel_timer_callback)
 
         self.LeftHat = 0.0
@@ -31,6 +30,8 @@ class joyControl(Node):
         self.L2_wheel_speed = 0.0
         self.R2_wheel_speed = 0.0
 
+        self.get_logger().info('Joy Started')
+        
     def joy_callback(self, joy_in):
         self.LeftHat = joy_in.axes[1]
         self.RightHatX = joy_in.axes[3]
