@@ -2,10 +2,12 @@
 import rclpy
 from rclpy.node import Node
 
-from geometry_msgs.msg import Twist, Pose2D, TransformStamped
+from geometry_msgs.msg import Twist, Pose2D, TransformStamped, Vector3
 from std_msgs.msg import Float32, Int32
 from nav_msgs.msg import Odometry
+from sensor_msgs.msg import Joy
 import tf2_ros
+import random
 
 import math
 
@@ -25,6 +27,10 @@ class Robot(Node):
             Float32, 'wheel_command_left', 10)
         self.rightwheel_pub = self.create_publisher(
             Float32, 'wheel_command_right', 10)
+        self.seq_pub = self.create_publisher(
+            Vector3, 'robotcheck_status', 10)
+        self.joy_sub = self.create_subscription(
+            Joy, "joy", self.joy_callback, 20)
 
         self.v = 0.0
         self.w = 0.0
@@ -48,7 +54,7 @@ class Robot(Node):
 
         # Web
         self.web_control_sub = self.create_subscription(
-            Twist, 'mode_Control', self.web_control_callback, 10)
+            Twist, 'mode_control', self.web_control_callback, 10)
         self.cmd_l2 = Float32()
         self.cmd_r2 = Float32()
         self.Web_speed = 0.2
@@ -58,6 +64,22 @@ class Robot(Node):
         self.Web_A = 0
         self.Web_S = 0
         self.Web_D = 0
+
+        # Joy
+        self.cmd_l3 = Float32()
+        self.cmd_r3 = Float32()
+        self.LeftHat = 0.0
+        self.RightHatX = 0.0
+        self.RightHatY = 0.0
+        self.speedFW = 0.5
+        self.speedT = 0.5
+        self.L1_wheel_speed = 0.0
+        self.R1_wheel_speed = 0.0
+        self.L2_wheel_speed = 0.0
+        self.R2_wheel_speed = 0.0
+        self.Enable = 0
+        self.AnaL2 = 0.0
+        self.AnaR2 = 0.0
 
         # Odometry
         self.tick_per_rev = 99000  # 100000
@@ -71,7 +93,18 @@ class Robot(Node):
         # TF
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
+        # seq
+        self.seq = Vector3()
+
         self.get_logger().info("robot core is running")
+
+    def joy_callback(self, joy_in):
+        self.LeftHat = joy_in.axes[1]
+        self.RightHatX = joy_in.axes[3]
+        self.RightHatY = joy_in.axes[4]
+        self.Enable = joy_in.buttons[4]
+        self.AnaL2 = joy_in.axes[2]
+        self.AnaR2 = joy_in.axes[5]
 
     def web_control_callback(self, web_in):
         self.Web_Mode = int(web_in.linear.x)
@@ -110,11 +143,13 @@ class Robot(Node):
         self.wheel_speed_setpoint(v_r, v_l)
 
     def timer_callback(self):
-
-        if (self.Web_Mode):
+        self.seq.y = float(random.randint(0, 100))
+        self.seq_pub.publish(self.seq)
+        if int(self.Web_Mode):
             if (self.Web_A and self.Web_W):
                 self.cmd_l2.data = self.Web_speed*0.5
                 self.cmd_r2.data = self.Web_speed
+
             elif (self.Web_D and self.Web_W):
                 self.cmd_l2.data = self.Web_speed
                 self.cmd_r2.data = self.Web_speed*0.5
@@ -122,6 +157,7 @@ class Robot(Node):
             elif (self.Web_D and self.Web_S):
                 self.cmd_l2.data = -self.Web_speed
                 self.cmd_r2.data = -self.Web_speed*0.5
+
             elif (self.Web_A and self.Web_S):
                 self.cmd_l2.data = -self.Web_speed*0.5
                 self.cmd_r2.data = -self.Web_speed
@@ -129,6 +165,7 @@ class Robot(Node):
             elif (self.Web_A):
                 self.cmd_l2.data = -self.Web_speedT
                 self.cmd_r2.data = self.Web_speedT
+
             elif (self.Web_D):
                 self.cmd_l2.data = self.Web_speedT
                 self.cmd_r2.data = -self.Web_speedT
@@ -144,18 +181,67 @@ class Robot(Node):
                 self.cmd_l2.data = 0.00
                 self.cmd_r2.data = 0.00
 
-            if self.cmd_l2.data != 0.00 and self.cmd_r2.data != 0.00:
-                self.get_logger().info('Manual left rpm: %s' % self.cmd_l2.data)
-                self.get_logger().info('Manual right rpm: %s' % self.cmd_r2.data)
             self.leftwheel_pub.publish(self.cmd_l2)
             self.rightwheel_pub.publish(self.cmd_r2)
 
         elif (not self.Web_Mode):
-            if self.cmd_l.data != 0.00 and self.cmd_r.data != 0.00:
-                self.get_logger().info('Auto left rpm: %s' % self.cmd_l.data)
-                self.get_logger().info('Auto right rpm: %s' % self.cmd_r.data)
-            self.leftwheel_pub.publish(self.cmd_l)
-            self.rightwheel_pub.publish(self.cmd_r)
+            if int(self.Enable):
+
+                if self.LeftHat > 0.01 or self.LeftHat < -0.01:  # Forward & Backward
+                    self.cmd_l3.data = self.LeftHat*self.speedFW
+                    self.cmd_r3.data = self.LeftHat*self.speedFW
+
+                if self.AnaL2 < -0.2 or self.AnaR2 < -0.2:
+                    if self.AnaL2 < -0.2:
+                        #self.get_logger().info("Rotate Left")
+                        self.cmd_l3.data = -(-self.AnaL2*self.speedT)
+                        self.cmd_r3.data = (-self.AnaL2*self.speedT)
+
+                    elif self.AnaR2 < -0.2:
+                        #self.get_logger().info("Rotate Right")
+                        self.cmd_l3.data = (-self.AnaR2*self.speedT)
+                        self.cmd_r3.data = -(-self.AnaR2*self.speedT)
+
+                if self.RightHatX > 0.02 or self.RightHatX < -0.02 and self.LeftHat > 0.02 or self.LeftHat < -0.02:  # curve
+                    if self.RightHatX > 0.02 and self.LeftHat > 0.02:
+                        #self.get_logger().info("Curve forward Left")
+                        self.cmd_l3.data = self.RightHatX*(self.speedT*0.5)
+                        self.cmd_r3.data = self.RightHatX*self.speedT
+
+                    elif self.RightHatX < -0.02 and self.LeftHat > 0.02:
+                        #self.get_logger().info("Curve forward Right")
+                        self.cmd_l3.data = -1*self.RightHatX*self.speedT
+                        self.cmd_r3.data = -1*self.RightHatX*(self.speedT*0.5)
+
+                    elif self.RightHatX > 0.02 and self.LeftHat < -0.02:
+                        #self.get_logger().info("Curve backward Left")
+                        self.cmd_l3.data = -(self.RightHatX*(self.speedT*0.5))
+                        self.cmd_r3.data = -(self.RightHatX*self.speedT)
+
+                    elif self.RightHatX < -0.02 and self.LeftHat < -0.02:
+                        #self.get_logger().info("Curve backward Right")
+                        self.cmd_l3.data = -(-self.RightHatX*self.speedT)
+                        self.cmd_r3.data = -(-self.RightHatX*(self.speedT*0.5))
+
+                elif (self.LeftHat < 0.01 and self.LeftHat > -0.01 and self.RightHatX < 0.02 and self.RightHatX > -0.02 and self.LeftHat < 0.02 and self.LeftHat > -0.02 and self.AnaL2 > -0.2 and self.AnaR2 > -0.2):
+                    # self.get_logger().info("Stop")
+                    self.cmd_l3.data = 0.00
+                    self.cmd_r3.data = 0.00
+
+                self.leftwheel_pub.publish(self.cmd_l3)
+                self.rightwheel_pub.publish(self.cmd_r3)
+            elif not int(self.Enable):
+                # self.cmd_l3.data = 0.00
+                # self.cmd_r3.data = 0.00
+                self.leftwheel_pub.publish(self.cmd_l)
+                self.rightwheel_pub.publish(self.cmd_r)
+
+        if self.cmd_l.data != 0.00 and self.cmd_r.data != 0.00:
+            self.get_logger().info('Auto left rpm: %s' % self.cmd_l.data)
+            self.get_logger().info('Auto right rpm: %s' % self.cmd_r.data)
+        if self.cmd_l2.data != 0.00 and self.cmd_r2.data != 0.00:
+            self.get_logger().info('Manual left rpm: %s' % self.cmd_l2.data)
+            self.get_logger().info('Manual right rpm: %s' % self.cmd_r2.data)
         self.odometry()
 
     def wheel_speed_setpoint(self, vr, vl):

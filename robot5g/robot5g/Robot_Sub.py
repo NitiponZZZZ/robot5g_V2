@@ -18,6 +18,13 @@ class ModeControl(Node):
         self.stop_timer = self.create_timer(0.05, self.stop_timer_callback)
         self.mode_timer = self.create_timer(0.05, self.mode_timer_callback)
 
+        self.Mode_Control_ = 0
+        self.W = 0
+        self.A = 0
+        self.S = 0
+        self.D = 0
+        self.Path = 0
+
     def mode_timer_callback(self):
 
         self.Mode_Control_ = navi_data.get_mode
@@ -25,6 +32,7 @@ class ModeControl(Node):
         self.A = navi_data.key_a
         self.S = navi_data.key_s
         self.D = navi_data.key_d
+        self.Path = navi_data.nav_waypoint
 
         self.Mode = Twist()
         self.Mode.linear.x = float(self.Mode_Control_)
@@ -32,6 +40,7 @@ class ModeControl(Node):
         self.Mode.linear.z = float(self.A)
         self.Mode.angular.x = float(self.S)
         self.Mode.angular.y = float(self.D)
+        self.Mode.angular.z = float(self.Path)
 
         self.mode_pub.publish(self.Mode)
 

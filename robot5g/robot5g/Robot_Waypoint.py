@@ -5,6 +5,7 @@ from rclpy.node import Node
 from .include_navigator import BasicNavigator, NavigationResult
 from geometry_msgs.msg import PoseStamped
 import math
+from . import include_navi_data as navi_data
 
 
 class navRobot(Node):

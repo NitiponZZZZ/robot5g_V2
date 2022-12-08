@@ -28,8 +28,8 @@ class MQPUB(Node):
         self.Imu_X = 0.0
         self.Imu_Y = 0.0
         self.Imu_Z = 0.0
-        self.Seq_Control = 0.0
-        self.Seq_Navigation = 0.0
+        self.Seq_Control = 0
+        self.Seq_Navigation = 0
 
         self.Pzem_Voltage = 0.0
         self.Pzem_Amp = 0.0
@@ -42,9 +42,30 @@ class MQPUB(Node):
         self.Pzem_Watt = round(pz_in.linear.z, 2)
         self.Percent_Battery = round(pz_in.angular.x, 2)
 
+        # vPow = 5.0
+        # r1 = 100000
+        # r2 = 10000
+
+        # v = self.Pzem_Voltage
+        # v2 = v / (r2 / (r1 + r2))
+
+        # top = 42
+        # bottom = 36
+        # range = top - bottom
+        # rangeVolts = v2 - bottom
+        # percent = (rangeVolts / range) * 100
+
+        # if (percent > 100){
+        #     percent = 100
+        # }
+        # if (percent < 0) {
+        #     percent = 0
+        # }
+        # self.Percent_Battery = round(percent, 2)
+
     def robotcheck_callback(self, robot_in):
-        self.Seq_Control = round(robot_in.x, 2)
-        self.Seq_Navigation = round(robot_in.y, 2)
+        self.Seq_Control = int(robot_in.x)
+        self.Seq_Navigation = int(robot_in.y)
 
     # def sendMQTT_timer_callback(self):
     #     self.Imu_X = random.randint(0, 1)
@@ -52,9 +73,8 @@ class MQPUB(Node):
     #     self.Imu_Z = random.randint(0, 1)
 
     def sendMQTT2_timer_callback(self):
-        navi_data.sendData(self.Pzem_Voltage, self.Pzem_Watt,
-                           self.Pzem_Amp, self.Percent_Battery, self.Seq_Navigation)
-        pass
+        navi_data.sendData(self.Pzem_Voltage, self.Pzem_Amp,
+                           self.Pzem_Watt, self.Percent_Battery, self.Seq_Navigation)
 
 
 def main():

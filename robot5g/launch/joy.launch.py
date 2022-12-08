@@ -27,7 +27,7 @@ def generate_launch_description():
             package="micro_ros_agent",
             executable="micro_ros_agent",
             name="micro_ros_agent_teensy",
-            arguments=['serial', '--dev', '/dev/ttyUSB0'],  # /dev/esp32
+            arguments=['serial', '--dev', '/dev/esp32'],  # /dev/esp32
             output='screen',
         ),
     ])

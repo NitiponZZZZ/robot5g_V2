@@ -39,14 +39,16 @@ def generate_launch_description():
         description='Automatically startup the nav2 stack')
 
     declare_params_file_cmd = DeclareLaunchArgument(
-            'params_file',
-            default_value=os.path.join(costmap_filters_demo_dir, 'config', 'keepout_params.yaml'),
-            description='Full path to the ROS 2 parameters file to use')
+        'params_file',
+        default_value=os.path.join(
+            costmap_filters_demo_dir, 'config', 'keepout_params.yaml'),
+        description='Full path to the ROS 2 parameters file to use')
 
     declare_mask_yaml_file_cmd = DeclareLaunchArgument(
-            'mask',
-            default_value=os.path.join(costmap_filters_demo_dir, 'maps', 'nav2course2_filter.yaml'),
-            description='Full path to filter mask yaml file to load')
+        'mask',
+        default_value=os.path.join(
+            costmap_filters_demo_dir, 'maps', 'nav2course2_filter.yaml'),
+        description='Full path to filter mask yaml file to load')
 
     # Make re-written yaml
     param_substitutions = {
@@ -61,33 +63,33 @@ def generate_launch_description():
 
     # Nodes launching commands
     start_lifecycle_manager_cmd = Node(
-            package='nav2_lifecycle_manager',
-            executable='lifecycle_manager',
-            name='lifecycle_manager_costmap_filters',
-            namespace=namespace,
-            output='screen',
-            emulate_tty=True,  # https://github.com/ros2/launch/issues/188
-            parameters=[{'use_sim_time': use_sim_time},
-                        {'autostart': autostart},
-                        {'node_names': lifecycle_nodes}])
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_costmap_filters',
+        namespace=namespace,
+        output='screen',
+        emulate_tty=True,  # https://github.com/ros2/launch/issues/188
+        parameters=[{'use_sim_time': use_sim_time},
+                    {'autostart': autostart},
+                    {'node_names': lifecycle_nodes}])
 
     start_map_server_cmd = Node(
-            package='nav2_map_server',
-            executable='map_server',
-            name='filter_mask_server',
-            namespace=namespace,
-            output='screen',
-            emulate_tty=True,  # https://github.com/ros2/launch/issues/188
-            parameters=[configured_params])
+        package='nav2_map_server',
+        executable='map_server',
+        name='filter_mask_server',
+        namespace=namespace,
+        output='screen',
+        emulate_tty=True,  # https://github.com/ros2/launch/issues/188
+        parameters=[configured_params])
 
     start_costmap_filter_info_server_cmd = Node(
-            package='nav2_map_server',
-            executable='costmap_filter_info_server',
-            name='costmap_filter_info_server',
-            namespace=namespace,
-            output='screen',
-            emulate_tty=True,  # https://github.com/ros2/launch/issues/188
-            parameters=[configured_params])
+        package='nav2_map_server',
+        executable='costmap_filter_info_server',
+        name='costmap_filter_info_server',
+        namespace=namespace,
+        output='screen',
+        emulate_tty=True,  # https://github.com/ros2/launch/issues/188
+        parameters=[configured_params])
 
     ld = LaunchDescription()
 

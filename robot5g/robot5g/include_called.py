@@ -12,8 +12,7 @@ while True:
     #     navi_data.key_d
 
     # navi_data.get_mode
-    print(str(navi_data.get_mode)+" "+str(navi_data.key_w)+" "+str(navi_data.key_a) +
-          " "+str(navi_data.key_s)+" "+str(navi_data.key_d))
-
-    # print(type(navi_data.key_w))
+   # print(str(navi_data.get_mode)+" "+str(navi_data.key_w)+" "+str(navi_data.key_a) +" "+str(navi_data.key_s)+" "+str(navi_data.key_d))
+    # print(navi_data.nav_stop)
+    print(navi_data.nav_waypoint)
     #navi_data.sendData(1, 1, 1, 1, 1)

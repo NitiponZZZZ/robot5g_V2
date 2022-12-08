@@ -8,8 +8,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    ekf_config_path = PathJoinSubstitution(
-        [FindPackageShare('robot5g'), 'config', 'ekf.yaml'])
 
     lidar_launch_path = PathJoinSubstitution(
         [FindPackageShare('sllidar_ros2'), 'launch', 'sllidar_s2_launch.py'])
@@ -39,37 +37,28 @@ def generate_launch_description():
         ),
         Node(
             package='robot5g',
-            executable='imu_publisher',
-            name='imu_converter_node',
+            executable='data_pub',
+            name='DATA_Sender',
             output='screen',
         ),
         Node(
             package='robot5g',
-            executable='mqtt_pub',
-            name='MQTT_Sender',
+            executable='data_sub',
+            name='DATA_Reader',
             output='screen',
         ),
+
+        Node(
+            package='joy',
+            executable='joy_node',
+            name='joy',
+            output='both',
+        ),
+
         Node(
             package='robot5g',
-            executable='mqtt_sub',
-            name='MQTT_Reader',
-            output='screen',
+            executable='joystick',
+            name='joy_teleop',
+            output='both',
         ),
-        # Node(
-        #     package='tf2_ros',
-        #     executable='static_transform_publisher',
-        #     name='imu_tf_publisher',
-        #     arguments=['0.1', '0.0', '0.05', '0.0', '0.0',
-        #                '0.0', '1.0', 'base_link', 'imu_link'],
-        # ),
-        # Node(
-        #     package='robot_localization',
-        #     executable='ekf_node',
-        #     name='ekf_filter_node',
-        #     output='screen',
-        #     parameters=[
-        #         ekf_config_path
-        #     ],
-        #     remappings=[("odometry/filtered", "odom")]
-        # ),
     ])

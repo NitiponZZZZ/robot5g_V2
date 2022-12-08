@@ -41,9 +41,12 @@ class feedback(Node):
             dataDecoder = BinaryPayloadDecoder.fromRegisters(
                 data.registers, byteorder=Endian.Big, wordorder=Endian.Little)
             self.pzvoltage = dataDecoder.decode_16bit_int() / 100        # adress 0x0000
+
             # 0x0001 *0.5 because power bridge range is higher
             self.pzcurrent = (dataDecoder.decode_16bit_int() / 100)*0.5
+
             self.pzpower = self.pzvoltage * self.pzcurrent               # 0x0002, 0x0003
+
             self.pzpercent = self.mapper(self.pzvoltage, 36, 42, 0, 100)
 
             power_status = Twist()

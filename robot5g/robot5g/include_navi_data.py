@@ -9,9 +9,10 @@ host = "broker.hivemq.com"
 port = 1883
 topic_interval = "Robot5G_Nav_Interval"
 topicStop = "Robot5G_Nav_Stop"
+topicWaypoint = "Robot5G_Nav_Waypoint"
 topicapture = "Robot5G_Nav_Capture"
 stopic_control = 'control'
-stopic_mode_navi = 'mode'  # 'Robot5G_Nav_Mode'
+stopic_mode_navi = 'mode'
 stopic_point_navi = 'Robot5G_Nav_Point'
 
 
@@ -19,20 +20,22 @@ def on_connect(self, client, userdata, rc):
     global mqtt_connect
     mqtt_connect = True
     self.subscribe(topicStop)
-    #mqtt_connect = True
+    self.subscribe(topicWaypoint)
 
 
 def subMessage(client, userdata, msg):
     global nav_stop
+    global nav_waypoint
 
     if (msg.topic == topicStop):
         msg_stop = msg.payload.decode("utf-8")
         msg_stop = json.loads(msg_stop)
-        nav_stop = str(msg_stop.get("Stop"))
-        # print("data : " + str(msg_stop.get("Stop")))
+        nav_stop = int(msg_stop.get("Stop"))
 
-    #     Mode_ = msg.payload.decode("utf-8")
-    #     Mode_ = json.loads(Mode_)
+    if (msg.topic == topicWaypoint):
+        msg_waypoint = msg.payload.decode("utf-8")
+        msg_waypoint = json.loads(msg_waypoint)
+        nav_waypoint = int(msg_waypoint.get("Waypoint"))
 
 
 def on_publish(client, userdata, mid):
@@ -43,7 +46,6 @@ def on_publish(client, userdata, mid):
 def connect():
     global socket_connect
     socket_connect = True
-    #print("I'm connected!")
 
 
 @sio.event
@@ -66,7 +68,6 @@ def on_message(data):
     key_a = int(data.get("A"))
     key_s = int(data.get("S"))
     key_d = int(data.get("D"))
-   #print('data receive :'+ str(data))
 
 
 @sio.on(stopic_mode_navi)
@@ -75,28 +76,25 @@ def on_message(data):
     get_mode = int(data.get("Mode"))
 
 
-@sio.on('price')
-def on_message(data):
-    print('Price Data ', data)
-
-
 client = mqtt.Client()
 client.connect(host)
 client.on_connect = on_connect
 client.on_message = subMessage
 client.on_publish = on_publish
+
 nav_stop = 0
+nav_waypoint = 0
 key_w = 0
 key_a = 0
 key_s = 0
 key_d = 0
 get_mode = 0
+
 client.loop_start()
 
-
 try:
-    # sio.connect('https://robot5g-client.herokuapp.com')
-    sio.connect('https://robot5g-app.herokuapp.com/')
+    # sio.connect('https://delta-dee.tech/')
+    sio.connect('https://robot5g-api.herokuapp.com')
 except:
     sio.reconnection()
 
